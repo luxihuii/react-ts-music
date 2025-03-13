@@ -24,5 +24,5 @@ npm install
 ```
 Run
 ```
-npm dev
+npm run dev
 ```
