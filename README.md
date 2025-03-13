@@ -1,13 +1,13 @@
 # React + TypeScript + Vite
 
 ## Technology Stack
-TypeScript, React, Ajax, Redux, React-router, Styled Components, Mock.js, Ant Design, Vite, Cookies
+TypeScript, React, Ajax, Redux, React-router, Styled Components, Mock.js, Ant Design, Vite
 
 ## Project Description
 - Functionality Implementation
 Popular music recommendation, music list playback, search function, login authentication, data mock;
 - Security Design
-JWT user authentication, using SHA-256 encryption, cookie storage, HTTPS protocol transmission;
+JWT user authentication, using SHA-256 encryption, localStorage storage, HTTPS protocol transmission;
 - Stability Construction
 Design request timeout retry mechanism (exponential backoff, up to 3 times), switch to alternate API after failure;
 - Robustness Design
