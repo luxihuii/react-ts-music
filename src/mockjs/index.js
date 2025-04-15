@@ -17,12 +17,10 @@ Mock.mock('http://localhost:3000/user/login', 'post', (options) => {
       const accessTokenTmp = {
         username: username,
         exp: currentTime + 3600 // 1h
-        // exp: currentTime + 120
       }
       const refreshTokenTmp = {
         username: username,
         exp: currentTime + 3600 * 24 * 7 // 7d
-        // exp: currentTime + 120 * 5
       }
       return Mock.mock({
         code: 200,
@@ -31,11 +29,15 @@ Mock.mock('http://localhost:3000/user/login', 'post', (options) => {
         data: {
           accessToken: {
             accessTokenTmp,
-            signature: crypto.HmacSHA256(JSON.stringify(accessTokenTmp), secret).toString()
+            signature: crypto
+              .HmacSHA256(JSON.stringify(accessTokenTmp), secret)
+              .toString()
           },
           refreshToken: {
             refreshTokenTmp,
-            signature: crypto.HmacSHA256(JSON.stringify(refreshTokenTmp), secret).toString()
+            signature: crypto
+              .HmacSHA256(JSON.stringify(refreshTokenTmp), secret)
+              .toString()
           }
         }
       })
@@ -81,6 +83,8 @@ Mock.mock('http://localhost:3000/user/register', 'post', (options) => {
 
 // 模拟验证 Token
 Mock.mock('http://localhost:3000/user/verifyToken', 'post', (options) => {
+//   const authHeader = options.data['Authorization']
+//   const accessToken = authHeader.split(' ')[1]
   const { accessToken } = JSON.parse(options.body)
 
   try {
@@ -95,70 +99,69 @@ Mock.mock('http://localhost:3000/user/verifyToken', 'post', (options) => {
 
     return Mock.mock({
       code: 200,
+      username: accessTokenTmp.username,
       success: true,
-      message: 'Token 验证成功',
-      data: null
+      message: 'Token 验证成功'
     })
   } catch (error) {
     return Mock.mock({
       code: 401,
       success: false,
-      message: 'Token 验证失败',
-      data: null
+      message: 'Token 验证失败'
     })
   }
 })
 
 // 模拟刷新 token 接口
 Mock.mock('http://localhost:3000/api/refresh-token', 'post', (options) => {
-  const { refreshToken } = JSON.parse(options.body)
+//   const authHeader = options.headers[Authorization]
+//   const refreshToken = authHeader.split(' ')[1]
+    const { refreshToken } = JSON.parse(options.body)
 
-  if (refreshToken) {
-    try {
-      // 验证 refreshToken 是否有效
-      const { refreshTokenTmp, signature } = refreshToken // 获取用户名或其他信息
-      if (signature !== crypto.HmacSHA256(JSON.stringify(refreshTokenTmp), secret).toString()) {
-        throw new Error('')
-      }
-
-      const currentTime = Math.floor(Date.now() / 1000)
-      const username = tokenTmp.username
-      // 如果 refreshToken 有效，则可以生成新的 accessToken 和 refreshToken
-      const newAccessTokenTmp = {
-        username: username,
-        exp: currentTime + 3600 // 1h
-        // exp: currentTime + 120
-      }
-      const newRefreshTokenTmp = {
-        username: username,
-        exp: currentTime + 3600 * 24 * 7 // 7d
-        // exp: currentTime + 120 * 5
-      }
-      return Mock.mock({
-        code: 200,
-        message: '刷新成功',
-        data: {
-          accessToken: {
-            accessTokenTmp: newAccessTokenTmp,
-            signature: crypto.HmacSHA256(newAccessTokenTmp, secret).toString()
-          },
-          refreshToken: {
-            refreshTokenTmp: newRefreshTokenTmp,
-            signature: crypto.HmacSHA256(newRefreshTokenTmp, secret).toString()
-          }
-        }
-      })
-    } catch (error) {
-      // 如果 refreshToken 无效或过期
-      return Mock.mock({
-        code: 401,
-        message: '刷新 token 失败，token 无效或已过期'
-      })
+  try {
+    // 验证 refreshToken 是否有效
+    const { refreshTokenTmp, signature } = refreshToken // 获取用户名或其他信息
+    if (
+      signature !==
+      crypto.HmacSHA256(JSON.stringify(refreshTokenTmp), secret).toString()
+    ) {
+      throw new Error('验证失败，不正确，错误')
     }
-  } else {
+
+    const currentTime = Math.floor(Date.now() / 1000)
+    const username = refreshTokenTmp.username
+    // 如果 refreshToken 有效，则可以生成新的 accessToken 和 refreshToken
+    const newAccessTokenTmp = {
+      username: username,
+      exp: currentTime + 3600 // 1h
+    }
+    const newRefreshTokenTmp = {
+      username: username,
+      exp: currentTime + 3600 * 24 * 7 // 7d
+    }
     return Mock.mock({
-      code: 400,
-      message: '请求参数错误，未提供 refreshToken'
+      code: 200,
+      message: '刷新成功',
+      data: {
+        accessToken: {
+          accessTokenTmp: newAccessTokenTmp,
+          signature: crypto
+            .HmacSHA256(JSON.stringify(newAccessTokenTmp), secret)
+            .toString()
+        },
+        refreshToken: {
+          refreshTokenTmp: newRefreshTokenTmp,
+          signature: crypto
+            .HmacSHA256(JSON.stringify(newRefreshTokenTmp), secret)
+            .toString()
+        }
+      }
+    })
+  } catch (error) {
+    // 如果 refreshToken 无效或过期
+    return Mock.mock({
+      code: 401,
+      message: '刷新 token 失败，token 无效或已过期'
     })
   }
 })

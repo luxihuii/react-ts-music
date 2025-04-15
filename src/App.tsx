@@ -4,12 +4,8 @@ import { memo, Suspense } from 'react'
 import AppHeader from './components/app-header'
 import AppFooter from './components/app-footer'
 import AppPlayerBar from './views/player/app-player-bar'
-// import { useAppDispatch } from './store'
-// import { fetchCurrentSongAction } from './views/player/store/player'
 
 function App() {
-  // throw new Error('出错了')
-
   return (
     <div className="App">
       <AppHeader />

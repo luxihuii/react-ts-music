@@ -407,8 +407,7 @@ const initialState: IPlayerState = {
   lyrics: [],
   lyricIndex: -1,
   mp3: '',
-  playSongList: [
-  ],
+  playSongList: [],
   playMp3List: [],
   playLyricsList: [],
   playSongIndex: -1,

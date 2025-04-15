@@ -7,10 +7,10 @@ import headerTitles from '@/assets/data/header_titles.json'
 import { Input } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import AppLogin from '../app-login'
-import { postLogin, postRefreshToken, postVerifyToken } from '@/service'
+import { postRefreshToken, postVerifyToken } from '@/service'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
-import { shallowEqualApp, useAppDispatch, useAppSelector } from '@/store'
+import { useAppDispatch } from '@/store'
 import { changeCurrentUserInfoAction } from '@/store/userInfo'
 
 interface IProps {
@@ -18,12 +18,6 @@ interface IProps {
 }
 
 const AppHeader: FC<IProps> = () => {
-  const { accessToken } = useAppSelector(
-    (state) => ({
-      accessToken: state.userInfo.accessToken
-    }),
-    shallowEqualApp
-  )
   const dispatch = useAppDispatch()
   const [showLogin, setShowLogin] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false) // 登录状态
@@ -34,9 +28,12 @@ const AppHeader: FC<IProps> = () => {
   // 组件加载时检查cookie中的token
   useEffect(() => {
     const refreshTokenString = Cookies.get('refreshToken')
+    const accessTokenString = localStorage.getItem('accessToken')
 
+    let accessToken: any
     let refreshToken: any
-    if (refreshTokenString) {
+    if (accessTokenString && refreshTokenString) {
+      accessToken = JSON.parse(accessTokenString)
       refreshToken = JSON.parse(refreshTokenString)
     } else {
       return
@@ -44,14 +41,13 @@ const AppHeader: FC<IProps> = () => {
 
     const currentTime = Math.floor(Date.now() / 1000) // 获取当前时间（秒）
 
-    if (!refreshToken) {
+    if (!accessToken || !refreshToken) {
       setIsLoggedIn(false)
       return
     }
-
     // 存在
     let timer: NodeJS.Timeout
-    if (accessToken && accessToken.token.exp > currentTime) {
+    if (accessToken.token.exp > currentTime) {
       // accessToken 未过期，验证是否有效
       verifyToken(accessToken)
       setIsLoggedIn(true)
@@ -87,40 +83,42 @@ const AppHeader: FC<IProps> = () => {
   // 处理退出登录
   const handleLogout = () => {
     Cookies.remove('refreshToken')
+    localStorage.removeItem('accessToken')
     setIsLoggedIn(false) // 设置登录状态为false
-    dispatch(changeCurrentUserInfoAction({username: "", accessToken: null}))
+    dispatch(changeCurrentUserInfoAction(""))
   }
 
   // 模拟验证 accessToken
-  const verifyToken = async (accessToken: any) => {
+  const verifyToken = async (accessToken: string) => {
     try {
       const response = await postVerifyToken(accessToken)
       if (response.data.code === 200) {
+        console.log()
         // 验证成功
         setIsLoggedIn(true)
         dispatch(changeCurrentUserInfoAction(response.data.username))
       } else {
         // 验证失败，执行相关逻辑（如移除 token、重新登录等）
+        localStorage.removeItem('accessToken')
         Cookies.remove('refreshToken')
         setIsLoggedIn(false)
-        dispatch(
-          changeCurrentUserInfoAction({ username: '', accessToken: null })
-        )
+        dispatch(changeCurrentUserInfoAction(''))
         console.log('会话已过期，将显示提示信息')
         alert('会话已过期，请重新登录')
       }
     } catch (error) {
       console.error('Token 验证失败:', error)
       Cookies.remove('refreshToken')
+      localStorage.removeItem('accessToken')
       setIsLoggedIn(false)
-      dispatch(changeCurrentUserInfoAction({ username: '', accessToken: null }))
+      dispatch(changeCurrentUserInfoAction(''))
       console.log('发生错误，将显示提示信息')
       alert('发生错误，请重新登录')
     }
   }
 
   // 模拟刷新 accessToken
-  const refreshAccessToken = async (refreshToken: any) => {
+  const refreshAccessToken = async (refreshToken: string) => {
     if (!refreshToken) {
       setIsLoggedIn(false)
       return
@@ -129,11 +127,9 @@ const AppHeader: FC<IProps> = () => {
     try {
       const response = await postRefreshToken(refreshToken)
       if (response.data.code === 200) {
-        dispatch(
-          changeCurrentUserInfoAction({
-            username: response.data.data.accessToken.token.username,
-            accessToken: response.data.data.accessToken
-          })
+        localStorage.setItem(
+          'accessToken',
+          JSON.stringify(response.data.data.accessToken)
         )
         Cookies.set(
           'refreshToken',
@@ -143,15 +139,13 @@ const AppHeader: FC<IProps> = () => {
         setIsLoggedIn(true)
       } else {
         Cookies.remove('refreshToken')
-        dispatch(
-          changeCurrentUserInfoAction({ username: '', accessToken: null })
-        )
+        localStorage.removeItem('accessToken')
         setIsLoggedIn(false)
       }
     } catch (error) {
       console.error('刷新 token 失败:', error)
       Cookies.remove('refreshToken')
-      dispatch(changeCurrentUserInfoAction({ username: '', accessToken: null }))
+      localStorage.removeItem('accessToken')
       setIsLoggedIn(false)
     }
   }

@@ -3,6 +3,9 @@ import type { FC, ReactNode } from 'react'
 import { LoginWrapper } from './style'
 import { postLogin, postRegister } from '@/service'
 import Cookies from 'js-cookie'
+import DOMPurify from 'dompurify'
+import { useAppDispatch } from '@/store'
+import { changeCurrentUserInfoAction } from '@/store/userInfo'
 
 interface IProps {
   children?: ReactNode
@@ -12,6 +15,7 @@ interface IProps {
 }
 
 const AppLogin: FC<IProps> = ({ isOpen, onClose, onLoginSuccess }) => {
+  const dispatch = useAppDispatch()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [repassword, setRepassword] = useState('')
@@ -23,12 +27,13 @@ const AppLogin: FC<IProps> = ({ isOpen, onClose, onLoginSuccess }) => {
 
     try {
       const response = await postLogin(username, password)
+      console.log(response)
       if (response.data.success) {
-        Cookies.set(
-          'accessToken',
-          JSON.stringify(response.data.data.accessToken),
-          { expires: 7, path: '/' }
-        )
+        // 存储 accessToken
+        // localStorage.setItem(
+        //   'accessToken',
+        //   JSON.stringify(response.data.data.accessToken)
+        // )
         Cookies.set(
           'refreshToken',
           JSON.stringify(response.data.data.refreshToken),
@@ -36,6 +41,13 @@ const AppLogin: FC<IProps> = ({ isOpen, onClose, onLoginSuccess }) => {
         )
         onClose()
         onLoginSuccess?.() // 调用登录成功回调
+        // 正确调用方式
+        dispatch(
+          changeCurrentUserInfoAction({
+            username: username,
+            accessToken: response.data.data.accessToken
+          })
+        )
         setMessage('') // 清空错误信息
       } else {
         setMessage(response.data.message)
@@ -48,16 +60,35 @@ const AppLogin: FC<IProps> = ({ isOpen, onClose, onLoginSuccess }) => {
   const handleRegister = async (e: any) => {
     e.preventDefault()
 
-    if (password !== repassword) {
-      setMessage('确认密码一致')
+    // 清理用户输入
+    const sanitizedUsername = DOMPurify.sanitize(username)
+    const sanitizedPassword = DOMPurify.sanitize(password)
+
+    // 检查密码是否一致
+    if (sanitizedPassword !== repassword) {
+      setMessage('确认密码不一致')
+      return
+    }
+
+    // 输入验证
+    const usernamePattern = /^[a-zA-Z0-9_]{4,16}$/ // 用户名只允许字母、数字和下划线，长度 4-16
+    const passwordPattern = /^[a-zA-Z0-9!@#$%^&*]{6,20}$/ // 密码允许字母、数字和特殊字符，长度 6-20
+
+    if (!usernamePattern.test(sanitizedUsername)) {
+      setMessage('用户名只能包含字母、数字和下划线，且长度为 4-16 个字符')
+      return
+    }
+
+    if (!passwordPattern.test(sanitizedPassword)) {
+      setMessage('密码只能包含字母、数字和特殊字符，且长度为 6-20 个字符')
       return
     }
 
     try {
-      const response = await postRegister(username, password)
+      const response = await postRegister(sanitizedUsername, sanitizedPassword)
       setMessage(response.data.message)
     } catch (error) {
-      setMessage('注册失败') // 设置更具体的错误信息
+      setMessage('注册失败')
     }
   }
 

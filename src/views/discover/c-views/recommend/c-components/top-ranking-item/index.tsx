@@ -17,7 +17,7 @@ const TopRankingItem: FC<IProps> = (props) => {
   const { itemRankingData, itemPlayListData } = props
 
   const dispatch = useAppDispatch()
-  function handlePlayClick(id: number) {
+  function handlePlayClick(id: any) {
     dispatch(fetchCurrentSongAction(id))
   }
 

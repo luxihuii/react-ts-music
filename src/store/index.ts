@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit'
+import userInfoReducer from '@/store/userInfo'
 import recommendReducer from '@/views/discover/c-views/recommend/store/recommend'
 import playerReducer from '@/views/player/store/player'
 import { shallowEqual, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 
 const store = configureStore({
     reducer: {
+        userInfo: userInfoReducer,
         recommend: recommendReducer,
         player: playerReducer
     }

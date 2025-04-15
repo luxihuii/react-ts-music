@@ -29,20 +29,50 @@ export function postRegister(username: string, password: string) {
   })
 }
 
+// export function postVerifyToken(accessToken: string) {
+//   return hyRequest.post({
+//     url: 'http://localhost:3000/user/verifyToken',
+//     // headers: {
+//     //   Authorization: `Bearer ${accessToken}`
+//     // },
+//     data: {
+//       accessToken
+//     }
+//   })
+// }
+
+// export function postRefreshToken(refreshToken: string) {
+//   return hyRequest.post({
+//     url: 'http://localhost:3000/api/refresh-token',
+//     // headers: {
+//     //   Authorization: `Bearer ${refreshToken}`
+//     // }
+//     data: {
+//       refreshToken
+//     }
+//   })
+// }
+
 export function postVerifyToken(accessToken: string) {
   return hyRequest.post({
     url: 'http://localhost:3000/user/verifyToken',
+    // headers: {
+    //   Authorization: `Bearer ${accessToken}`
+    // },
     data: {
-      accessToken
+        accessToken
     }
   })
 }
 
 export function postRefreshToken(refreshToken: string) {
   return hyRequest.post({
-    url: 'http://localhost:3000/api/refresh-token',
+    url: 'http://localhost:3000/user/refreshToken',
+    // headers: {
+    //   Authorization: `Bearer ${refreshToken}`
+    // }
     data: {
-      refreshToken
+        refreshToken
     }
   })
 }
